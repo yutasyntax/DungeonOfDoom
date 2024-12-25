@@ -11,6 +11,7 @@ import java.util.regex.Pattern;
 public class GameLogic {
     private char [][] map; //２次元のマップデータ（変数）を格納する
     private int playerX, playerY; //playerの位置を決める変数を作成
+    // private Bot bot; // Botクラス型の変数の「宣言」？この段階ではデータもオブジェクトも持たない
     private int botX, botY; //botの位置を決める変数
     private Player player; // プレイヤーオブジェクトの宣言？
     private int G_toWin = 0; //勝利条件はデフォルト０
@@ -106,11 +107,86 @@ public class GameLogic {
         //　マップにボットを配置する
         map[botX][botY] = 'B';
 
+        // Botのオブジェクトを生成
+        // bot = new Bot(botX, botY); //新しいBotオブジェクトを生成して変数に割り当てる
+
     }
 
     public void movePlayer(String direction) {
         player.move(direction, map, G_Posi); // Player クラスの move メソッドを呼び出す
+        playerX = player.getX(); // プレイヤーのX座標を更新
+        playerY = player.getY(); // プレイヤーのY座標を更新
+        captured(player.getX(), player.getY()); //Botに捕まったかどうか確認
     }
+
+    public void moveBot() {
+        Random rand = new Random();
+        int newX = botX;
+        int newY = botY;
+        
+        while (true) {
+            newX = botX;
+            newY = botY;
+
+            //ランダムに進行方向を選択
+            int botDirection = rand.nextInt(4);
+
+            //方向ごとの条件
+            if (botDirection == 0) {
+                newX = botX - 1; // 北
+            } else if (botDirection == 1) {
+                newX = botX + 1; // 南
+            } else if (botDirection == 2) {
+                newY = botY + 1; // 東
+            } else if (botDirection == 3) {
+                newY = botY - 1; // 西
+            }
+
+            if (newX >= 0 && newX < map.length && newY >= 0 && newY < map[newX].length && map[newX][newY] != '#') {
+                break;
+            }
+        }
+        // 現在の位置を元の状態に戻す
+        if (isGoldPosition(botX, botY, G_Posi)) {
+            map[botX][botY] = 'G'; // 元の位置がゴールドの場合はGに戻す
+        } else if (is_EPosi(botX, botY, E_Posi)) {
+            map[botX][botY] = 'E'; // 元の位置がExitの場合はEに戻す
+        } else {
+            map[botX][botY] = '.'; // それ以外の場合は通常の床に戻す
+        }
+
+        // 新しい位置に移動
+        botX = newX;
+        botY = newY;
+        map[botX][botY] = 'B'; // Botを新しい位置に配置
+
+        captured(botX, botY); //Botに捕まったかどうか確認
+    }
+
+// Botがゴールド位置にいるか確認
+private boolean isGoldPosition(int x, int y, List<int[]> goldPositions) {
+    for (int[] gold : goldPositions) {
+        if (gold[0] == x && gold[1] == y) {
+            return true;
+        }
+    }
+    return false;
+}
+
+// BotがExit位置にいるか確認
+private boolean is_EPosi(int x, int y, List<int[]> exitPositions) {
+    for (int[] exit : exitPositions) {
+        if (exit[0] == x && exit[1] == y) {
+            return true;
+        }
+    }
+    return false;
+}
+
+
+
+
+
 
 
     //マップを表示するメソッド
@@ -156,6 +232,45 @@ public class GameLogic {
         }
         System.exit(0);
     }
+
+
+    public void captured(int currentX, int currentY) {
+        System.out.println("Player position: (" + player.getX() + ", " + player.getY() + ")");
+        System.out.println("Bot position: (" + botX + ", " + botY + ")");
+        System.out.println("Checking collision at: (" + currentX + ", " + currentY + ")");
+
+        if (playerX == botX && playerY == botY) {
+            System.out.println("LOSE. You are captured.");
+            map[botX][botY] = '*';
+            displayMap();
+            System.exit(0); // ゲームを終了
+        }
+    }
+
+    public void look() {
+        int startX = playerX - 2; // プレイヤーを中心にする
+        int startY = playerY - 2;
+    
+        for (int i = 0; i < 5; i++) {
+            for (int j = 0; j < 5; j++) {
+                int currentX = startX + i;
+                int currentY = startY + j;
+    
+                if (currentX < 0 || currentX >= map.length || currentY < 0 || currentY >= map[currentX].length) {
+                    // 範囲外は壁として表示
+                    System.out.print("#");
+                } else if (currentX == playerX && currentY == playerY) {
+                    // プレイヤーの位置を中心にする
+                    System.out.print("P");
+                } else {
+                    // それ以外はマップの内容をそのまま表示
+                    System.out.print(map[currentX][currentY]);
+                }
+            }
+            System.out.println(); // 行ごとに改行
+        }
+    }
+
 
 }
 

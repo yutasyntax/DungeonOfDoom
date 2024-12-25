@@ -11,7 +11,7 @@ public class Main {
 
         // プレイヤーの移動を受け付けるゲームループ
         while (true) {
-            game.displayMap();
+            // game.displayMap();
             System.out.println("Enter a command (HELLO / GOLD / PICKUP / MOVE <direction> / LOOK / QUIT:");
             String command = scanner.nextLine().toUpperCase(); // 入力を大文字に変換
 
@@ -25,22 +25,21 @@ public class Main {
                     break;
                 case "MOVE N":
                     game.movePlayer("N"); // プレイヤーの移動
-                    // game.displayMap(); // 移動後のマップを表示
                     break;
                 case "MOVE E":
                     game.movePlayer("E"); // プレイヤーの移動
-                    // game.displayMap(); // 移動後のマップを表示
                     break;        
                 case "MOVE W":
                     game.movePlayer("W"); // プレイヤーの移動
-                    // game.displayMap(); // 移動後のマップを表示
                     break;
                 case "MOVE S":
                     game.movePlayer("S"); // プレイヤーの移動
-                    // game.displayMap(); // 移動後のマップを表示
                     break;        
                 case "PICKUP":
                     game.pickupG();
+                    break;
+                case "LOOK":
+                    game.look();
                     break;
                 case "QUIT":
                     game.quit();
@@ -49,14 +48,8 @@ public class Main {
                     System.out.println("Invalid command.");
             }
 
-
-
-            // // ゲーム終了条件のチェック（仮に追加）
-            // // 例: 必要なゴールドを集めて出口に到達したら終了
-            // if (game.isGameOver()) {
-            //     System.out.println("Game Over!");
-            //     break;
-            // }
+            // Botのターン
+            game.moveBot();
         }
     }
 }
