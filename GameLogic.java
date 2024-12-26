@@ -1,7 +1,6 @@
 import java.io.*; //ファイル出入力に関する必要なクラス
 //ランダムな値を生成するクラス
 import java.util.*; //リスト系に必要なもの
-
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
@@ -19,11 +18,37 @@ public class GameLogic {
     private List<int[]> G_Posi = new ArrayList<>(); //Goldのポジションを保存するリスト
     private List<int[]> E_Posi = new ArrayList<>(); //Exitのポジションを保存するリスト
 
-    public void loadMap(String fileName) { //fileNameと言うファイルを読み込むメソッド
+
+    /*マップの形式が正しいかどうかをチェック */
+    public void inquireMap(Scanner s){
+        // Scanner s = new Scanner(System.in); 
+        while (true) {
+            System.out.println("Input the pass (e.g., DungeonOfDoom/dungeon.txt):");
+            String fileName = s.nextLine(); //ユーザーの入力をfileName に代入する
+
+            /*fileNameを使ってマップを読み込む。正常にロードされるまで繰り返す*/
+            if (loadMap(fileName)) {
+                break;
+            } else {
+                System.out.println("Please try again.");
+            }
+        }    
+    }
+
+
+    /*マップの読み込み*/
+    public boolean loadMap(String fileName) { //mainで入力されたmapfileを読み込むメソッド
+
+        /*ファイルが渡されなかった場合のエラー */
+        if (fileName == null || fileName.isEmpty()) {
+            System.out.println("Error: file is not provided.");
+            return false;
+        }
+
         try {
             List<char[]> lines = new ArrayList<>(); //char[]型のデータを保存するリストを作って、linesと言う名前にする（設計図を作る）
                                                     //new ArrayList<>();で　その設計図に沿ったオブジェクトを作る
-            BufferedReader br = new BufferedReader(new FileReader("DungeonOfDoom/dungeon.txt")); //fileを読むFileReaderを効率よく読み取るBufferReaderのオブジェクトを作成
+            BufferedReader br = new BufferedReader(new FileReader(fileName)); //fileを読むFileReaderを効率よく読み取るBufferReaderのオブジェクトを作成
             String line;
 
             int lineNum = 0; //現在の行No.を保存
@@ -66,16 +91,19 @@ public class GameLogic {
                     }
                 }
             }
+
+            return true;
         //try-catch構文　IOException(入出力系のエラー)が出たら 変数eに格納
         } catch (IOException e) {
             System.out.println("Error: Could not load the map file.");
             //eの中にあるエラー情報の詳細を出力
             e.printStackTrace();
+            return false;
         }
     }
 
 
-    public void initialisePlayers() {
+    public void positioningPandB() {
         if (map == null) {
             System.out.println("Error: Map is not loaded.");
             return;
