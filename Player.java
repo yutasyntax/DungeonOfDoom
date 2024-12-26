@@ -11,6 +11,11 @@ public class Player {
         this.y = startY;
     }
 
+
+
+
+    
+
     // プレイヤーを移動するメソッド
     public void move(String direction, char[][] map, List<int[]> G_Posi) {
 

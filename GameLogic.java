@@ -1,11 +1,12 @@
-import java.io.*; //ファイル出入力に関する必要なクラス
-//ランダムな値を生成するクラス
-import java.util.*; //リスト系に必要なもの
+import java.util.List;
+import java.util.ArrayList;
+import java.util.Scanner;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.util.Random;
+
+
 
 public class GameLogic {
     private char [][] map; //２次元のマップデータ（変数）を格納する
@@ -21,12 +22,11 @@ public class GameLogic {
 
     /*マップの形式が正しいかどうかをチェック */
     public void inquireMap(Scanner s){
-        // Scanner s = new Scanner(System.in); 
         while (true) {
             System.out.println("Input the pass (e.g., DungeonOfDoom/dungeon.txt):");
             String fileName = s.nextLine(); //ユーザーの入力をfileName に代入する
 
-            /*fileNameを使ってマップを読み込む。正常にロードされるまで繰り返す*/
+            /*マップを読み込む。正常にロードされるまで繰り返す*/
             if (loadMap(fileName)) {
                 break;
             } else {
@@ -46,39 +46,34 @@ public class GameLogic {
         }
 
         try {
-            List<char[]> lines = new ArrayList<>(); //char[]型のデータを保存するリストを作って、linesと言う名前にする（設計図を作る）
-                                                    //new ArrayList<>();で　その設計図に沿ったオブジェクトを作る
-            BufferedReader br = new BufferedReader(new FileReader(fileName)); //fileを読むFileReaderを効率よく読み取るBufferReaderのオブジェクトを作成
-            String line;
-
-            int lineNum = 0; //現在の行No.を保存
-            Pattern pattern = Pattern.compile("win (\\d+)"); //win　数字の正規表現を探す
+            List<char[]> list = new ArrayList<>(); //マップ（charの配列）を保存するためのオブジェクト
+            FileReader fr = new FileReader(fileName); //ファイルから文字を読み取るためのオブジェクト
+            BufferedReader br = new BufferedReader(fr); //行単位で文字を読み取るためのオブジェクト
         
+            
+            /*mapデータ内の文字列"win (number)"から数字を読み取り、３行目以降からマップの構成を読み取る。*/
+            String line;
+            int lineNum = 0;
 
-            //brに対して実際にreadlineして１行のデータをlineに代入。ファイルの終わりに達するまで繰り返す
-            while ((line = br.readLine()) != null) {
+            while ((line = br.readLine()) != null) { 
                 lineNum++;
 
-                if (lineNum == 2) {
-                    Matcher matcher = pattern.matcher(line);
-                    if (matcher.find()) {
-                        G_toWin = Integer.parseInt(matcher.group(1));
-                    } else {
-                        G_toWin = 0;
-                    }
-                } else if (lineNum > 2) { //3行め以降に対して・・・
-                    //lineというストリング型に対してchar型に変換する。それをさっきのlinesと言うリストに入れる
-                    //linesは複数の行を同時に抱えることができる
-                    lines.add(line.toCharArray());
+                if (line.startsWith("win ")) {
+                    String num = line.substring(4).trim(); // "win "をtrimして数字だけを取得
+                    int G_toWin = Integer.parseInt(num);
+                    System.out.println("\nGold to win: " + G_toWin);
+                } else {
+                        G_toWin = 0; 
+                }
+                if (lineNum > 2) {
+                    list.add(line.toCharArray()); //読み込んだ文字列をchar[]に変換してリストに追加
                 }
             }
-            //接続を閉じてリソースを解放
-            br.close();
+            br.close(); 
             
             //char[行数][列数]は2次元の配列
-            //toArrayによりリスト型のlinesを2次元の配列に変換。
             //配列にすることで2行目の３列目とかにアクセスするのが楽になる
-            map = lines.toArray(new char[lines.size()][]);
+            map = list.toArray(new char[list.size()][]); //listの集合を2次元の配列に変換。
 
 
             // GoldとExitの位置を把握
@@ -104,10 +99,6 @@ public class GameLogic {
 
 
     public void positioningPandB() {
-        if (map == null) {
-            System.out.println("Error: Map is not loaded.");
-            return;
-        }
 
         Random rand = new Random(); //標準ライブラリのランダムクラスを使ったオブジェクト作成
         // int playerX, playerY;
@@ -263,9 +254,6 @@ private boolean is_EPosi(int x, int y, List<int[]> exitPositions) {
 
 
     public void captured(int currentX, int currentY) {
-        System.out.println("Player position: (" + player.getX() + ", " + player.getY() + ")");
-        System.out.println("Bot position: (" + botX + ", " + botY + ")");
-        System.out.println("Checking collision at: (" + currentX + ", " + currentY + ")");
 
         if (playerX == botX && playerY == botY) {
             System.out.println("LOSE. You are captured.");
