@@ -16,7 +16,7 @@ public class Main {
             while (true) {
                 System.out.println("Enter a command(HELLO / GOLD / PICKUP / MOVE <direction> / LOOK / QUIT): ");
                 String command = s.nextLine().toUpperCase(); // 入力を大文字に変換しながら読み取り
-                System.err.println();
+                System.out.println(); //改行
 
                 if (command.equals("HELLO")) { 
                     game.hello(); //勝利条件を確認する

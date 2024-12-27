@@ -10,11 +10,13 @@ import java.util.Random;
 
 public class GameLogic {
     private char [][] map; //２次元のマップデータ（変数）を格納する
-    private int playerX, playerY; //playerの位置を決める変数を作成
-    // private Bot bot; // Botクラス型の変数の「宣言」？この段階ではデータもオブジェクトも持たない
-    private int botX, botY; //botの位置を決める変数
-    private Player player; // プレイヤーオブジェクトの宣言？
-    private int G_toWin = 0; //勝利条件はデフォルト０
+    private Player player; // プレイヤーオブジェクトの変数
+    private int playerX, playerY; //playerの位置の変数
+    
+    private Bot bot; // Botオブジェクトの変数
+    private int botX, botY; //botの位置の変数
+
+    private int G_toWin = 0; //勝利条件
 
     private List<int[]> G_Posi = new ArrayList<>(); //Goldのポジションを保存するリスト
     private List<int[]> E_Posi = new ArrayList<>(); //Exitのポジションを保存するリスト
@@ -71,14 +73,11 @@ public class GameLogic {
             }
             br.close(); 
             
-            //char[行数][列数]は2次元の配列
-            //配列にすることで2行目の３列目とかにアクセスするのが楽になる
-            map = list.toArray(new char[list.size()][]); //listの集合を2次元の配列に変換。
+            map = list.toArray(new char[list.size()][]); //listの集合を2次元の配列に変換。（char[行数][列数]は2次元の配列）
 
-
-            // GoldとExitの位置を把握
-            for (int i = 0; i < map.length; i++) { //全ての列で繰り返し
-                for (int j = 0; j < map[i].length; j++) { //全ての行で繰り返し
+            /*map（2次元配列）からGoldとExitの位置を取得*/
+            for (int i = 0; i < map.length; i++) { //全ての行に対して繰り返す
+                for (int j = 0; j < map[i].length; j++) { //全ての列に対して繰り返す
                     if (map[i][j] == 'G') {
                         G_Posi.add(new int[]{i, j});
                     } else if (map[i][j] == 'E') {
@@ -86,50 +85,43 @@ public class GameLogic {
                     }
                 }
             }
-
             return true;
-        //try-catch構文　IOException(入出力系のエラー)が出たら 変数eに格納
+
+        /*try-catch構文　IOException(入出力系のエラー)が発生した場合の対応 */
         } catch (IOException e) {
-            System.out.println("Error: Could not load the map file.");
-            //eの中にあるエラー情報の詳細を出力
-            e.printStackTrace();
+            System.out.println("Error: ");
+            e.printStackTrace(); //エラーの詳細を出力
             return false;
         }
     }
 
 
+    /*Player(P)とBot(B)をランダムに配置する */
     public void positioningPandB() {
 
-        Random rand = new Random(); //標準ライブラリのランダムクラスを使ったオブジェクト作成
-        // int playerX, playerY;
+        Random r = new Random(); //ランダムクラスのオブジェクト生成
         
-        // プレイヤーのランダム配置
-        // do-while構文で最低一度はループを実行する
+        /* プレイヤーの配置。マップファイルの最初の2行はメタデータなので、3行目から最終行までの範囲でランダムな数を生成する。* 壁(#)がない場所を指定するまで繰り返す*/
         do {
-            // nextIntはrandomクラスのメソッド。０〜（）の範囲内でランダムな数を返す。
-            playerX = rand.nextInt(map.length -2) +2; //map.length＝行の範囲内
-            playerY = rand.nextInt(map[playerX].length); //map[playerX].length=０行目だとしたときの列数
+            playerX = r.nextInt(map.length -2) +2; //ランダムに行を選択
+            playerY = r.nextInt(map[playerX].length); //指定された行内でランダムに列を選択
         } while (map[playerX][playerY] == '#');
         
-        //　マップにプレイヤーを配置する
-        map[playerX][playerY] = 'P';
+        map[playerX][playerY] = 'P'; //指定された地点にプレイヤーを表示する
+        player = new Player(playerX, playerY);  //Playerオブジェクトを生成して位置情報を更新
 
-        // Player オブジェクトの位置情報も更新
-        player = new Player(playerX, playerY);
 
-        // botをランダム配置
+        /* botの配置。#とPがない場所を指定するまで繰り返す*/
         do {
-            botX = rand.nextInt(map.length -2) +2;
-            botY = rand.nextInt(map[botX].length);
+            botX = r.nextInt(map.length -2) +2;
+            botY = r.nextInt(map[botX].length);
         } while (map[botX][botY] == '#' || (botX == playerX && botY == playerY));
         
-        //　マップにボットを配置する
-        map[botX][botY] = 'B';
-
-        // Botのオブジェクトを生成
-        // bot = new Bot(botX, botY); //新しいBotオブジェクトを生成して変数に割り当てる
+        map[botX][botY] = 'B'; //指定された地点にボットを配置する
+        bot = new Bot(botX, botY); //Botオブジェクトを生成して位置情報を更新
 
     }
+
 
     public void movePlayer(String direction) {
         player.move(direction, map, G_Posi); // Player クラスの move メソッドを呼び出す
@@ -138,73 +130,13 @@ public class GameLogic {
         captured(player.getX(), player.getY()); //Botに捕まったかどうか確認
     }
 
+
+
+
     public void moveBot() {
-        Random rand = new Random();
-        int newX = botX;
-        int newY = botY;
-        
-        while (true) {
-            newX = botX;
-            newY = botY;
-
-            //ランダムに進行方向を選択
-            int botDirection = rand.nextInt(4);
-
-            //方向ごとの条件
-            if (botDirection == 0) {
-                newX = botX - 1; // 北
-            } else if (botDirection == 1) {
-                newX = botX + 1; // 南
-            } else if (botDirection == 2) {
-                newY = botY + 1; // 東
-            } else if (botDirection == 3) {
-                newY = botY - 1; // 西
-            }
-
-            if (newX >= 0 && newX < map.length && newY >= 0 && newY < map[newX].length && map[newX][newY] != '#') {
-                break;
-            }
-        }
-        // 現在の位置を元の状態に戻す
-        if (isGoldPosition(botX, botY, G_Posi)) {
-            map[botX][botY] = 'G'; // 元の位置がゴールドの場合はGに戻す
-        } else if (is_EPosi(botX, botY, E_Posi)) {
-            map[botX][botY] = 'E'; // 元の位置がExitの場合はEに戻す
-        } else {
-            map[botX][botY] = '.'; // それ以外の場合は通常の床に戻す
-        }
-
-        // 新しい位置に移動
-        botX = newX;
-        botY = newY;
-        map[botX][botY] = 'B'; // Botを新しい位置に配置
-
-        captured(botX, botY); //Botに捕まったかどうか確認
+        bot.move(map, G_Posi, E_Posi); // Bot の移動処理を委譲
+        captured(bot.getX(), bot.getY()); // 捕獲判定
     }
-
-// Botがゴールド位置にいるか確認
-private boolean isGoldPosition(int x, int y, List<int[]> goldPositions) {
-    for (int[] gold : goldPositions) {
-        if (gold[0] == x && gold[1] == y) {
-            return true;
-        }
-    }
-    return false;
-}
-
-// BotがExit位置にいるか確認
-private boolean is_EPosi(int x, int y, List<int[]> exitPositions) {
-    for (int[] exit : exitPositions) {
-        if (exit[0] == x && exit[1] == y) {
-            return true;
-        }
-    }
-    return false;
-}
-
-
-
-
 
 
 
@@ -291,5 +223,67 @@ private boolean is_EPosi(int x, int y, List<int[]> exitPositions) {
 }
 
 
+//     public void moveBot() {
+//         Random rand = new Random();
+//         int newX = botX;
+//         int newY = botY;
+        
+//         while (true) {
+//             newX = botX;
+//             newY = botY;
 
+//             //ランダムに進行方向を選択
+//             int botDirection = rand.nextInt(4);
+
+//             //方向ごとの条件
+//             if (botDirection == 0) {
+//                 newX = botX - 1; // 北
+//             } else if (botDirection == 1) {
+//                 newX = botX + 1; // 南
+//             } else if (botDirection == 2) {
+//                 newY = botY + 1; // 東
+//             } else if (botDirection == 3) {
+//                 newY = botY - 1; // 西
+//             }
+
+//             if (newX >= 0 && newX < map.length && newY >= 0 && newY < map[newX].length && map[newX][newY] != '#') {
+//                 break;
+//             }
+//         }
+//         // 現在の位置を元の状態に戻す
+//         if (isGoldPosition(botX, botY, G_Posi)) {
+//             map[botX][botY] = 'G'; // 元の位置がゴールドの場合はGに戻す
+//         } else if (is_EPosi(botX, botY, E_Posi)) {
+//             map[botX][botY] = 'E'; // 元の位置がExitの場合はEに戻す
+//         } else {
+//             map[botX][botY] = '.'; // それ以外の場合は通常の床に戻す
+//         }
+
+//         // 新しい位置に移動
+//         botX = newX;
+//         botY = newY;
+//         map[botX][botY] = 'B'; // Botを新しい位置に配置
+
+//         captured(botX, botY); //Botに捕まったかどうか確認
+//     }
+
+// // Botがゴールド位置にいるか確認
+// private boolean isGoldPosition(int x, int y, List<int[]> goldPositions) {
+//     for (int[] gold : goldPositions) {
+//         if (gold[0] == x && gold[1] == y) {
+//             return true;
+//         }
+//     }
+//     return false;
+// }
+
+// // BotがExit位置にいるか確認
+// private boolean is_EPosi(int x, int y, List<int[]> exitPositions) {
+//     for (int[] exit : exitPositions) {
+//         if (exit[0] == x && exit[1] == y) {
+//             return true;
+//         }
+//     }
+//     return false;
+// }
 

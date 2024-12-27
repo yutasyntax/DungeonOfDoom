@@ -1,9 +1,11 @@
 import java.util.List;
-import java.util.Scanner; //??????
 
 public class Player {
     private int x, y; // プレイヤーの位置
     private int Gcounter = 0; // 持ってるGの数
+
+
+
 
     // コンストラクタで初期位置を設定
     public Player(int startX, int startY) {
@@ -12,7 +14,11 @@ public class Player {
     }
 
 
-
+//     public void movePlayer(String direction, char[][] map, List<int[]> G_Posi, GameLogic gameLogic) {
+//         this.move(direction, map, G_Posi); // プレイヤーの移動処理
+//         gameLogic.updatePlayerPosition(this.getX(), this.getY()); // GameLogic にプレイヤーの位置更新を通知
+//         gameLogic.captured(this.getX(), this.getY()); // Botに捕まったかどうか確認
+// }
 
     
 
