@@ -4,6 +4,7 @@ public class Main {
     public static void main(String[] args) { //このプログラムのエントリーポイント。 String[]argsは”任意の数の文字列を入力として受け取る”
         GameLogic game = new GameLogic(); //GameLogicクラスのオブジェクトを作成（そのクラスのメソッドを使用するため）
         Scanner s = new Scanner(System.in); //コマンドラインから入力を受け取るためのScannerオブジェクトの生成
+        Bot bot = new Bot(0, 0);
 
         game.inquireMap(s); //マップの読み込みと初期化
         game.positioningPandB(); //プレイヤーとボットをランダムに配置する
@@ -17,6 +18,7 @@ public class Main {
                 System.out.println("Enter a command(HELLO / GOLD / PICKUP / MOVE <direction> / LOOK / QUIT): ");
                 String command = s.nextLine().toUpperCase(); // 入力を大文字に変換しながら読み取り
                 System.out.println(); //改行
+                
 
                 if (command.equals("HELLO")) { 
                     game.hello(); //勝利条件を確認する

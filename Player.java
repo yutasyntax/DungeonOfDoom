@@ -2,32 +2,16 @@ import java.util.List;
 
 public class Player {
     private int x, y; // プレイヤーの位置
-    private int Gcounter = 0; // 持ってるGの数
+    private int Gcounter = 0; // プレイヤーが保有するGの数
 
 
-
-
-    // コンストラクタで初期位置を設定
-    public Player(int startX, int startY) {
-        this.x = startX;
-        this.y = startY;
-    }
-
-
-//     public void movePlayer(String direction, char[][] map, List<int[]> G_Posi, GameLogic gameLogic) {
-//         this.move(direction, map, G_Posi); // プレイヤーの移動処理
-//         gameLogic.updatePlayerPosition(this.getX(), this.getY()); // GameLogic にプレイヤーの位置更新を通知
-//         gameLogic.captured(this.getX(), this.getY()); // Botに捕まったかどうか確認
-// }
-
-    
-
-    // プレイヤーを移動するメソッド
-    public void move(String direction, char[][] map, List<int[]> G_Posi) {
+    /* プレイヤーの移動 */
+    public void move(String direction, char[][] map, List<int[]> G_Posi, List<int[]> E_Posi) {
 
         int newX = x;
         int newY = y;
 
+        /* Mainクラスから渡された direction に応じてnewXとnewYを更新*/
         if (direction.equals("N")) {
             newX = x - 1; // 北
         } else if (direction.equals("S")) {
@@ -37,51 +21,52 @@ public class Player {
         } else if (direction.equals("W")) {
             newY = y - 1; // 西
         } else {
-            System.out.println("Invalid input. Please enter N, E, W, or S.");
-            return; // 入力が無効なら再入力を促す
+            System.out.println("Error: Invalid input."); //エラーハンドリング（通常は使用しない）
+            return;
         }
 
-        // 移動可能か判定
-        if (isValidMove(newX, newY, map)) {
-
+        
+        if (isValidArea(newX, newY, map)) {
+            /* Pが居た場所を元のタイル(G,E,.)に戻す */
             if (is_GPosi(x, y, G_Posi)) {
-                map[x][y] = 'G'; //その地点がGのリストと一致する場合にはGに戻す
+                map[x][y] = 'G';
+            } else if (is_EPosi(x, y, E_Posi)){
+                map[x][y] = 'E';
             } else {
-                map[x][y] = '.'; // それ以外の場所なら通常の床に戻す
+                map[x][y] = '.';
             }
 
-
-            // 新しい位置にプレイヤーを配置
+            /* プレイヤーを配置 */
             x = newX;
             y = newY;
             map[x][y] = 'P';
-
-            System.out.println("Success"); //移動成功のメッセージ。            
-
+            System.out.println("Success");   
         } else {
-            System.out.println("Fail"); //移動失敗のメッセージ。
+            System.out.println("Fail");
         }
     }
 
-    // 移動可能かどうかを判定するメソッド
-    private boolean isValidMove(int x, int y, char[][] map) {
-        return x >= 0 && x < map.length && y >= 0 && y < map[x].length && map[x][y] != '#';
-    }
 
-    // そこがGの場所かどうかを判定するメソッド
+    /*移動先が壁でないかどうかを判定*/
+    private boolean isValidArea(int x, int y, char[][] map) {
+        return map[x][y] != '#';
+    }   
+
+    /* [x][y]がGoldの位置と合致するか判定 */ 
     private boolean is_GPosi(int x, int y, List<int[]> G_Posi) {
-        for (int[] gold : G_Posi) {
-            if (gold[0] == x && gold[1] == y) {
+        for (int i = 0; i < G_Posi.size(); i++) {
+            if (G_Posi.get(i)[0] == x && G_Posi.get(i)[1] == y) {
                 return true;
             }
         }
         return false;
     }
 
-    // そこがExitかどうかを判定するメソッド
+
+    /* [x][y]がExitの位置と合致するか判定 */
     public boolean is_EPosi(int x, int y, List<int[]> E_Posi) {
-        for (int[] exit : E_Posi) {
-            if (exit[0] == x && exit[1] == y) {
+        for (int i = 0; i < E_Posi.size(); i++) {
+            if (E_Posi.get(i)[0] == x && E_Posi.get(i)[1] == y) {
                 return true;
             }
         }
@@ -89,21 +74,26 @@ public class Player {
     }
 
 
-    //Pickupに関連するメソッド
+    /* Pickupメソッド。PがGと同じ位置にいる場合にGcounterをカウントアップし、G_Posiリストから削除する*/
     public boolean pickup(List<int[]> G_Posi, char[][] map) {
         for (int i = 0; i < G_Posi.size(); i++) {
-            int[] gold = G_Posi.get(i);
-            if (gold[0] == x && gold[1] == y ) {
+            int[] list = G_Posi.get(i);
+            if (list[0] == x && list[1] == y ) {
                 G_Posi.remove(i); // ゴールド位置をリストから削除
-                map[x][y] = 'P'; // マップを更新
-                Gcounter++;
-                // System.out.println("Success. Gold owned: " + Gcounter);
+                Gcounter++; //Gold所有数をカウントアップ
                 return true;
             }
         }
-        // System.out.println("Fail. Gold owned: " + Gcounter);
         return false;
     }
+
+
+    /*LOOK関連。 コンストラクタで初期位置を設定*/ 
+    public Player(int startX, int startY) {
+        this.x = startX;
+        this.y = startY;
+    }
+
 
     public int getGcount() {
         return Gcounter;
@@ -118,3 +108,4 @@ public class Player {
     }
 
 }
+

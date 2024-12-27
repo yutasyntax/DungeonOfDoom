@@ -60,12 +60,15 @@ public class GameLogic {
             while ((line = br.readLine()) != null) { 
                 lineNum++;
 
-                if (line.startsWith("win ")) {
-                    String num = line.substring(4).trim(); // "win "をtrimして数字だけを取得
-                    int G_toWin = Integer.parseInt(num);
-                    System.out.println("\nGold to win: " + G_toWin);
-                } else {
+                if (lineNum == 2) { 
+                    if (line.startsWith("win ")) {
+                        String num = line.substring(4).trim(); // "win "をtrimして数字だけを取得
+                        G_toWin = Integer.parseInt(num);
+                        System.out.println(); //改行
+                    } else {
+                        System.out.println("Win condition is set to 0."); //2行目に勝利条件が書いていなかった場合の対応
                         G_toWin = 0; 
+                    }
                 }
                 if (lineNum > 2) {
                     list.add(line.toCharArray()); //読み込んだ文字列をchar[]に変換してリストに追加
@@ -123,41 +126,37 @@ public class GameLogic {
     }
 
 
+    /* プレイヤーの移動 */
     public void movePlayer(String direction) {
-        player.move(direction, map, G_Posi); // Player クラスの move メソッドを呼び出す
+        player.move(direction, map, G_Posi, E_Posi); // Playerクラスの move メソッドを実行
         playerX = player.getX(); // プレイヤーのX座標を更新
         playerY = player.getY(); // プレイヤーのY座標を更新
-        captured(player.getX(), player.getY()); //Botに捕まったかどうか確認
+        // System.out.println("Player moved to (" + player.getX() + ", " + player.getY() + ")");　
+        captured(player.getX(), player.getY()); //Botに捕まったかどうかを確認
     }
 
-
-
-
+    /* Botの移動 */
     public void moveBot() {
         bot.move(map, G_Posi, E_Posi); // Bot の移動処理を委譲
-        captured(bot.getX(), bot.getY()); // 捕獲判定
+        botX = bot.getX(); // BotのX座標を更新
+        botY = bot.getY(); // BotのY座標を更新
+        // System.out.println("Bot moved to (" + bot.getX() + ", " + bot.getY() + ")");
+        captured(bot.getX(), bot.getY()); // Botに捕まったかどうかを確認
     }
 
 
 
-    //マップを表示するメソッド
-    public void displayMap() {
-        // 2次元配列の変数mapが初期化（宣言されて、値が代入されて、配列であればそのサイズn✖️ｎが設定されること）されてない場合
-        if (map == null) {
-            System.out.println("Map is not loaded.");
-            return;
-        }
-
-        //enhanced for loop(mapの各行を取り出してはrowと言う変数に格納しながらループする)
-        for (int i = 0; i < map.length; i++) {
-            //1次元の行rowから1文字ごとの文字を抜き取ってtileに代入。
-            for (int j = 0; j < map[i].length; j++){
-                System.out.print(map[i][j]);
-            }
-            System.out.println(); //各行の終わりに改行を入れる。
-        }
+    /* HELLOコマンド*/
+    public void hello() {
+        System.out.println("Gold to win: " + G_toWin);
     }
 
+    /* GOLDコマンド */
+    public void displayG() {
+        System.out.println("Gold Owned: " + player.getGcount());
+    }
+
+    /* PICKUPコマンド */
     public void pickupG() {
         if (player.pickup(G_Posi, map)) {
             System.out.println("Success. Gold owned: " + player.getGcount());
@@ -166,15 +165,7 @@ public class GameLogic {
         }
     }
 
-    public void displayG() {
-        System.out.println("Gold Owned: " + player.getGcount());
-    }
-
-    //ただGtoWinを表示するだけ
-    public void hello() {
-        System.out.println("Gold to win: " + G_toWin);
-    }
-
+    /* QUITコマンド。PがEと同じ位置にいて、G_toWin以上のGを持っていれば勝利。 */
     public void quit() {
         if (player.is_EPosi(player.getX(), player.getY(), E_Posi) && player.getGcount() >= G_toWin) {
             System.out.println("WIN. You became a millionaire!");
@@ -185,15 +176,26 @@ public class GameLogic {
     }
 
 
+    /*Pの位置とBの位置が重なったかどうかを確認*/
     public void captured(int currentX, int currentY) {
-
         if (playerX == botX && playerY == botY) {
             System.out.println("LOSE. You are captured.");
-            map[botX][botY] = '*';
+            map[botX][botY] = '*'; //衝突地点
             displayMap();
             System.exit(0); // ゲームを終了
         }
     }
+
+    /* 全体のMapの表示。全ての行iが持つ全ての列jを書き出す。 */
+    public void displayMap() {
+        for (int i = 0; i < map.length; i++) {
+            for (int j = 0; j < map[i].length; j++){
+                System.out.print(map[i][j]);
+            }
+            System.out.println();
+        }
+    }
+
 
     public void look() {
         int startX = playerX - 2; // プレイヤーを中心にする
@@ -219,71 +221,4 @@ public class GameLogic {
         }
     }
 
-
 }
-
-
-//     public void moveBot() {
-//         Random rand = new Random();
-//         int newX = botX;
-//         int newY = botY;
-        
-//         while (true) {
-//             newX = botX;
-//             newY = botY;
-
-//             //ランダムに進行方向を選択
-//             int botDirection = rand.nextInt(4);
-
-//             //方向ごとの条件
-//             if (botDirection == 0) {
-//                 newX = botX - 1; // 北
-//             } else if (botDirection == 1) {
-//                 newX = botX + 1; // 南
-//             } else if (botDirection == 2) {
-//                 newY = botY + 1; // 東
-//             } else if (botDirection == 3) {
-//                 newY = botY - 1; // 西
-//             }
-
-//             if (newX >= 0 && newX < map.length && newY >= 0 && newY < map[newX].length && map[newX][newY] != '#') {
-//                 break;
-//             }
-//         }
-//         // 現在の位置を元の状態に戻す
-//         if (isGoldPosition(botX, botY, G_Posi)) {
-//             map[botX][botY] = 'G'; // 元の位置がゴールドの場合はGに戻す
-//         } else if (is_EPosi(botX, botY, E_Posi)) {
-//             map[botX][botY] = 'E'; // 元の位置がExitの場合はEに戻す
-//         } else {
-//             map[botX][botY] = '.'; // それ以外の場合は通常の床に戻す
-//         }
-
-//         // 新しい位置に移動
-//         botX = newX;
-//         botY = newY;
-//         map[botX][botY] = 'B'; // Botを新しい位置に配置
-
-//         captured(botX, botY); //Botに捕まったかどうか確認
-//     }
-
-// // Botがゴールド位置にいるか確認
-// private boolean isGoldPosition(int x, int y, List<int[]> goldPositions) {
-//     for (int[] gold : goldPositions) {
-//         if (gold[0] == x && gold[1] == y) {
-//             return true;
-//         }
-//     }
-//     return false;
-// }
-
-// // BotがExit位置にいるか確認
-// private boolean is_EPosi(int x, int y, List<int[]> exitPositions) {
-//     for (int[] exit : exitPositions) {
-//         if (exit[0] == x && exit[1] == y) {
-//             return true;
-//         }
-//     }
-//     return false;
-// }
-
