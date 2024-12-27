@@ -131,7 +131,7 @@ public class GameLogic {
         player.move(direction, map, G_Posi, E_Posi); // Playerクラスの move メソッドを実行
         playerX = player.getX(); // プレイヤーのX座標を更新
         playerY = player.getY(); // プレイヤーのY座標を更新
-        // System.out.println("Player moved to (" + player.getX() + ", " + player.getY() + ")");　
+        System.out.println("Player moved to (" + player.getX() + ", " + player.getY() + ")");
         captured(player.getX(), player.getY()); //Botに捕まったかどうかを確認
     }
 
@@ -140,7 +140,7 @@ public class GameLogic {
         bot.move(map, G_Posi, E_Posi); // Bot の移動処理を委譲
         botX = bot.getX(); // BotのX座標を更新
         botY = bot.getY(); // BotのY座標を更新
-        // System.out.println("Bot moved to (" + bot.getX() + ", " + bot.getY() + ")");
+        System.out.println("Bot moved to (" + bot.getX() + ", " + bot.getY() + ")");
         captured(bot.getX(), bot.getY()); // Botに捕まったかどうかを確認
     }
 
@@ -167,7 +167,7 @@ public class GameLogic {
 
     /* QUITコマンド。PがEと同じ位置にいて、G_toWin以上のGを持っていれば勝利。 */
     public void quit() {
-        if (player.is_EPosi(player.getX(), player.getY(), E_Posi) && player.getGcount() >= G_toWin) {
+        if (player.is_EPosi(playerX, playerY, E_Posi) && player.getGcount() >= G_toWin) {
             System.out.println("WIN. You became a millionaire!");
         } else {
             System.out.println("LOSE.");
@@ -196,29 +196,24 @@ public class GameLogic {
         }
     }
 
-
+    /*LOOKのコマンド */
     public void look() {
-        int startX = playerX - 2; // プレイヤーを中心にする
-        int startY = playerY - 2;
+        int topX = playerX - 2; //Pから2個上の行
+        int leftY = playerY - 2; //Pから2個左の列
     
         for (int i = 0; i < 5; i++) {
             for (int j = 0; j < 5; j++) {
-                int currentX = startX + i;
-                int currentY = startY + j;
+                int x = topX + i;
+                int y = leftY + j;
     
-                if (currentX < 0 || currentX >= map.length || currentY < 0 || currentY >= map[currentX].length) {
-                    // 範囲外は壁として表示
+                /* x(行)とy(列)が0~.lengthの範囲外だった場合は#を描写。それ以外はそのまま表示する。　*/
+                if (x < 0 || x >= map.length || y < 0 || y >= map[x].length) {
                     System.out.print("#");
-                } else if (currentX == playerX && currentY == playerY) {
-                    // プレイヤーの位置を中心にする
-                    System.out.print("P");
                 } else {
-                    // それ以外はマップの内容をそのまま表示
-                    System.out.print(map[currentX][currentY]);
+                    System.out.print(map[x][y]);
                 }
             }
-            System.out.println(); // 行ごとに改行
+            System.out.println();
         }
     }
-
 }

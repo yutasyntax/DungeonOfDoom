@@ -2,12 +2,80 @@ import java.util.List;
 import java.util.Random;
 
 public class Bot {
-    private int x;
-    private int y;
+    private int x, y; // Botの位置
 
-    public Bot(int startX, int startY) {
-        this.x = startX;
-        this.y = startY;
+
+    /* コンストラクタ */
+    public Bot(int botX, int botY) {
+        this.x = botX;
+        this.y = botY;
+    }
+
+    /* Botの移動 */
+    public void move(char[][] map, List<int[]> G_Posi, List<int[]> E_Posi) {
+        Random r = new Random();
+        int newX = x;
+        int newY = y;
+
+        /*０から３までのランダムに生成した数字に応じてnewXとnewYを更新 */
+        while (true) {
+            int rnd = r.nextInt(4);
+            if (rnd == 0) {
+                newX = x - 1; // 北
+            } else if (rnd == 1) {
+                newX = x + 1; // 南
+            } else if (rnd == 2) {
+                newY = y + 1; // 東
+            } else if (rnd == 3) {
+                newY = y - 1; // 西
+            }
+
+            /*移動先が壁でないかどうかを判定 */
+            if (map[newX][newY] != '#') {
+                break;
+            }
+        }
+
+
+        /* Bが居た場所を元のタイル(G,E,.)に戻す */
+        if (is_GPosi(x, y, G_Posi)) {
+            map[x][y] = 'G';
+        } else if (is_EPosi(x, y, E_Posi)) {
+            map[x][y] = 'E';
+        } else {
+            map[x][y] = '.';
+        }
+
+        /* Botを配置 */
+        x = newX;
+        y = newY;
+        map[x][y] = 'B';
+    }
+
+
+
+
+
+
+    
+    /* [x][y]がGoldの位置と合致するか判定 */ 
+    private boolean is_GPosi(int x, int y, List<int[]> G_Posi) {
+        for (int i = 0; i < G_Posi.size(); i++) {
+            if (G_Posi.get(i)[0] == x && G_Posi.get(i)[1] == y) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /* [x][y]がExitの位置と合致するか判定 */
+    public boolean is_EPosi(int x, int y, List<int[]> E_Posi) {
+        for (int i = 0; i < E_Posi.size(); i++) {
+            if (E_Posi.get(i)[0] == x && E_Posi.get(i)[1] == y) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public int getX() {
@@ -18,56 +86,5 @@ public class Bot {
         return y;
     }
 
-    public void move(char[][] map, List<int[]> goldPositions, List<int[]> exitPositions) {
-        Random rand = new Random();
-        int newX = x;
-        int newY = y;
 
-        while (true) {
-            newX = x;
-            newY = y;
-
-            int botDirection = rand.nextInt(4);
-            if (botDirection == 0) newX = x - 1; // 北
-            else if (botDirection == 1) newX = x + 1; // 南
-            else if (botDirection == 2) newY = y + 1; // 東
-            else if (botDirection == 3) newY = y - 1; // 西
-
-            if (newX >= 0 && newX < map.length && newY >= 0 && newY < map[newX].length && map[newX][newY] != '#') {
-                break;
-            }
-        }
-
-        // 現在の位置を元の状態に戻す
-        if (isGoldPosition(x, y, goldPositions)) {
-            map[x][y] = 'G';
-        } else if (isExitPosition(x, y, exitPositions)) {
-            map[x][y] = 'E';
-        } else {
-            map[x][y] = '.';
-        }
-
-        // 新しい位置に移動
-        x = newX;
-        y = newY;
-        map[x][y] = 'B';
-    }
-
-    private boolean isGoldPosition(int x, int y, List<int[]> goldPositions) {
-        for (int[] gold : goldPositions) {
-            if (gold[0] == x && gold[1] == y) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    private boolean isExitPosition(int x, int y, List<int[]> exitPositions) {
-        for (int[] exit : exitPositions) {
-            if (exit[0] == x && exit[1] == y) {
-                return true;
-            }
-        }
-        return false;
-    }
 }

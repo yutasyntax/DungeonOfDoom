@@ -1,9 +1,15 @@
 import java.util.List;
 
+
 public class Player {
     private int x, y; // プレイヤーの位置
     private int Gcounter = 0; // プレイヤーが保有するGの数
 
+    /* コンストラクタ */ 
+    public Player(int playerX, int playerY) {
+        this.x = playerX;
+        this.y = playerY;
+    }
 
     /* プレイヤーの移動 */
     public void move(String direction, char[][] map, List<int[]> G_Posi, List<int[]> E_Posi) {
@@ -62,7 +68,6 @@ public class Player {
         return false;
     }
 
-
     /* [x][y]がExitの位置と合致するか判定 */
     public boolean is_EPosi(int x, int y, List<int[]> E_Posi) {
         for (int i = 0; i < E_Posi.size(); i++) {
@@ -85,13 +90,6 @@ public class Player {
             }
         }
         return false;
-    }
-
-
-    /*LOOK関連。 コンストラクタで初期位置を設定*/ 
-    public Player(int startX, int startY) {
-        this.x = startX;
-        this.y = startY;
     }
 
 
