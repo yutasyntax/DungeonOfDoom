@@ -30,7 +30,6 @@ public class Player {
             return;
         }
 
-        
         if (isValidArea(newX, newY, map)) {
             /* Return P's location to the original tile (G,E,.) */
             if (is_GPosi(x, y, G_Posi)) {
@@ -50,7 +49,6 @@ public class Player {
             System.out.println("Fail");
         }
     }
-
 
     /* Check if the destination is not '#' */
     private boolean isValidArea(int x, int y, char[][] map) {
@@ -77,7 +75,6 @@ public class Player {
         return false;
     }
 
-
     /* If P is in the same position as G, increase 'Gcounter' and remove it from 'G_Posi'.*/
     public boolean pickup(List<int[]> G_Posi, char[][] map) {
         for (int i = 0; i < G_Posi.size(); i++) {
@@ -91,7 +88,6 @@ public class Player {
         return false;
     }
 
-
     public int getGcount() {
         return Gcounter;
     }
@@ -103,6 +99,4 @@ public class Player {
     public int getY() {
         return y;
     }
-
 }
-

@@ -4,7 +4,6 @@ import java.util.Random;
 public class Bot {
     private int x, y; // Bot position
 
-
     /* constructor */
     public Bot(int botX, int botY) {
         this.x = botX;
@@ -36,7 +35,6 @@ public class Bot {
             }
         }
 
-
         /* Return B's location to the original tile (G,E,.) */
         if (is_GPosi(x, y, G_Posi)) {
             map[x][y] = 'G';
@@ -52,12 +50,6 @@ public class Bot {
         map[x][y] = 'B';
     }
 
-
-
-
-
-
-    
     /* Check if [x][y] matches Gold's position */ 
     private boolean is_GPosi(int x, int y, List<int[]> G_Posi) {
         for (int i = 0; i < G_Posi.size(); i++) {
@@ -85,6 +77,4 @@ public class Bot {
     public int getY() {
         return y;
     }
-
-
 }

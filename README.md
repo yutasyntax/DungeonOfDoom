@@ -1,2 +1,0 @@
-# DungeonOfDoom
-coursework of Programming
