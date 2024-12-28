@@ -2,42 +2,42 @@ import java.util.List;
 import java.util.Random;
 
 public class Bot {
-    private int x, y; // Botの位置
+    private int x, y; // Bot position
 
 
-    /* コンストラクタ */
+    /* constructor */
     public Bot(int botX, int botY) {
         this.x = botX;
         this.y = botY;
     }
 
-    /* Botの移動 */
+    /* bot movement */
     public void move(char[][] map, List<int[]> G_Posi, List<int[]> E_Posi) {
         Random r = new Random();
         int newX = x;
         int newY = y;
 
-        /*０から３までのランダムに生成した数字に応じてnewXとnewYを更新 */
+        /* Update newX and newY according to a randomly generated number between 0 and 3 */
         while (true) {
             int rnd = r.nextInt(4);
             if (rnd == 0) {
-                newX = x - 1; // 北
+                newX = x - 1; // North
             } else if (rnd == 1) {
-                newX = x + 1; // 南
+                newX = x + 1; // South
             } else if (rnd == 2) {
-                newY = y + 1; // 東
+                newY = y + 1; // East
             } else if (rnd == 3) {
-                newY = y - 1; // 西
+                newY = y - 1; // West
             }
 
-            /*移動先が壁でないかどうかを判定 */
+            /* Check if the destination is not '#' */
             if (map[newX][newY] != '#') {
                 break;
             }
         }
 
 
-        /* Bが居た場所を元のタイル(G,E,.)に戻す */
+        /* Return B's location to the original tile (G,E,.) */
         if (is_GPosi(x, y, G_Posi)) {
             map[x][y] = 'G';
         } else if (is_EPosi(x, y, E_Posi)) {
@@ -46,7 +46,7 @@ public class Bot {
             map[x][y] = '.';
         }
 
-        /* Botを配置 */
+        /* Place Bot */
         x = newX;
         y = newY;
         map[x][y] = 'B';
@@ -58,7 +58,7 @@ public class Bot {
 
 
     
-    /* [x][y]がGoldの位置と合致するか判定 */ 
+    /* Check if [x][y] matches Gold's position */ 
     private boolean is_GPosi(int x, int y, List<int[]> G_Posi) {
         for (int i = 0; i < G_Posi.size(); i++) {
             if (G_Posi.get(i)[0] == x && G_Posi.get(i)[1] == y) {
@@ -68,7 +68,7 @@ public class Bot {
         return false;
     }
 
-    /* [x][y]がExitの位置と合致するか判定 */
+    /* Check if [x][y] matches Exit's position */
     public boolean is_EPosi(int x, int y, List<int[]> E_Posi) {
         for (int i = 0; i < E_Posi.size(); i++) {
             if (E_Posi.get(i)[0] == x && E_Posi.get(i)[1] == y) {

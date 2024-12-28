@@ -1,39 +1,38 @@
 import java.util.List;
 
-
 public class Player {
-    private int x, y; // プレイヤーの位置
-    private int Gcounter = 0; // プレイヤーが保有するGの数
+    private int x, y; // Player position
+    private int Gcounter = 0; // The number of G the player has
 
-    /* コンストラクタ */ 
+    /* constructor */ 
     public Player(int playerX, int playerY) {
         this.x = playerX;
         this.y = playerY;
     }
 
-    /* プレイヤーの移動 */
+    /* player movement */
     public void move(String direction, char[][] map, List<int[]> G_Posi, List<int[]> E_Posi) {
 
         int newX = x;
         int newY = y;
 
-        /* Mainクラスから渡された direction に応じてnewXとnewYを更新*/
+        /* Update newX or newY according to direction passed from Main class*/
         if (direction.equals("N")) {
-            newX = x - 1; // 北
+            newX = x - 1; // North
         } else if (direction.equals("S")) {
-            newX = x + 1; // 南
+            newX = x + 1; // South
         } else if (direction.equals("E")) {
-            newY = y + 1; // 東
+            newY = y + 1; // East
         } else if (direction.equals("W")) {
-            newY = y - 1; // 西
+            newY = y - 1; // West
         } else {
-            System.out.println("Error: Invalid input."); //エラーハンドリング（通常は使用しない）
+            System.out.println("Error: Invalid input.");
             return;
         }
 
         
         if (isValidArea(newX, newY, map)) {
-            /* Pが居た場所を元のタイル(G,E,.)に戻す */
+            /* Return P's location to the original tile (G,E,.) */
             if (is_GPosi(x, y, G_Posi)) {
                 map[x][y] = 'G';
             } else if (is_EPosi(x, y, E_Posi)){
@@ -42,7 +41,7 @@ public class Player {
                 map[x][y] = '.';
             }
 
-            /* プレイヤーを配置 */
+            /* Place Player */
             x = newX;
             y = newY;
             map[x][y] = 'P';
@@ -53,12 +52,12 @@ public class Player {
     }
 
 
-    /*移動先が壁でないかどうかを判定*/
+    /* Check if the destination is not '#' */
     private boolean isValidArea(int x, int y, char[][] map) {
         return map[x][y] != '#';
     }   
 
-    /* [x][y]がGoldの位置と合致するか判定 */ 
+    /* Check if [x][y] matches Gold's position */ 
     private boolean is_GPosi(int x, int y, List<int[]> G_Posi) {
         for (int i = 0; i < G_Posi.size(); i++) {
             if (G_Posi.get(i)[0] == x && G_Posi.get(i)[1] == y) {
@@ -68,7 +67,7 @@ public class Player {
         return false;
     }
 
-    /* [x][y]がExitの位置と合致するか判定 */
+    /* Check if [x][y] matches Exit's position */
     public boolean is_EPosi(int x, int y, List<int[]> E_Posi) {
         for (int i = 0; i < E_Posi.size(); i++) {
             if (E_Posi.get(i)[0] == x && E_Posi.get(i)[1] == y) {
@@ -79,13 +78,13 @@ public class Player {
     }
 
 
-    /* Pickupメソッド。PがGと同じ位置にいる場合にGcounterをカウントアップし、G_Posiリストから削除する*/
+    /* If P is in the same position as G, increase 'Gcounter' and remove it from 'G_Posi'.*/
     public boolean pickup(List<int[]> G_Posi, char[][] map) {
         for (int i = 0; i < G_Posi.size(); i++) {
             int[] list = G_Posi.get(i);
             if (list[0] == x && list[1] == y ) {
-                G_Posi.remove(i); // ゴールド位置をリストから削除
-                Gcounter++; //Gold所有数をカウントアップ
+                G_Posi.remove(i); // Remove gold locations from the map
+                Gcounter++; // Increase Gold holdings
                 return true;
             }
         }

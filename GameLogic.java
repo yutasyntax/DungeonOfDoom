@@ -6,29 +6,23 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.Random;
 
-
-
 public class GameLogic {
-    private char [][] map; //２次元のマップデータ（変数）を格納する
-    private Player player; // プレイヤーオブジェクトの変数
-    private int playerX, playerY; //playerの位置の変数
-    
-    private Bot bot; // Botオブジェクトの変数
-    private int botX, botY; //botの位置の変数
+    private char [][] map; // Stores 2D map data
+    private Player player; // Object variable of Player
+    private int playerX, playerY; // Variables of Player position
+    private Bot bot; // Object variable of Bot
+    private int botX, botY; // Variables of Bot position
+    private int G_toWin = 0; //winning condition
+    private List<int[]> G_Posi = new ArrayList<>(); // list to store Gold positions
+    private List<int[]> E_Posi = new ArrayList<>(); // list to store Exit position(s)
 
-    private int G_toWin = 0; //勝利条件
-
-    private List<int[]> G_Posi = new ArrayList<>(); //Goldのポジションを保存するリスト
-    private List<int[]> E_Posi = new ArrayList<>(); //Exitのポジションを保存するリスト
-
-
-    /*マップの形式が正しいかどうかをチェック */
+    /* Check if map format is correct */
     public void inquireMap(Scanner s){
         while (true) {
             System.out.println("Input the pass (e.g., DungeonOfDoom/dungeon.txt):");
-            String fileName = s.nextLine(); //ユーザーの入力をfileName に代入する
+            String fileName = s.nextLine(); // Assign user input to fileName
 
-            /*マップを読み込む。正常にロードされるまで繰り返す*/
+            /* Load the map. Repeat until it loads successfully */
             if (loadMap(fileName)) {
                 break;
             } else {
@@ -37,50 +31,46 @@ public class GameLogic {
         }    
     }
 
+    /* Load map */
+    public boolean loadMap(String fileName) {
 
-    /*マップの読み込み*/
-    public boolean loadMap(String fileName) { //mainで入力されたmapfileを読み込むメソッド
-
-        /*ファイルが渡されなかった場合のエラー */
+        /* Error if no file is passed */
         if (fileName == null || fileName.isEmpty()) {
             System.out.println("Error: file is not provided.");
             return false;
         }
 
         try {
-            List<char[]> list = new ArrayList<>(); //マップ（charの配列）を保存するためのオブジェクト
-            FileReader fr = new FileReader(fileName); //ファイルから文字を読み取るためのオブジェクト
-            BufferedReader br = new BufferedReader(fr); //行単位で文字を読み取るためのオブジェクト
-        
-            
-            /*mapデータ内の文字列"win (number)"から数字を読み取り、３行目以降からマップの構成を読み取る。*/
+            List<char[]> list = new ArrayList<>(); // Object for storing map (array of char)
+            FileReader fr = new FileReader(fileName); // Object for reading characters from a file
+            BufferedReader br = new BufferedReader(fr); // Object for reading characters line by line
+             
+            /* Read number in the 2nd line. Read the map from the 3rd line onwards*/
             String line;
             int lineNum = 0;
 
             while ((line = br.readLine()) != null) { 
                 lineNum++;
-
                 if (lineNum == 2) { 
                     if (line.startsWith("win ")) {
-                        String num = line.substring(4).trim(); // "win "をtrimして数字だけを取得
+                        String num = line.substring(4).trim(); // Trim "win_" to get only the number
                         G_toWin = Integer.parseInt(num);
-                        System.out.println(); //改行
+                        System.out.println(); //Add a new line
                     } else {
-                        System.out.println("Win condition is set to 0."); //2行目に勝利条件が書いていなかった場合の対応
+                        System.out.println("There is no Win condition written on the second line. Win condition is set to 0."); //Error Handling
                         G_toWin = 0; 
                     }
                 }
                 if (lineNum > 2) {
-                    list.add(line.toCharArray()); //読み込んだ文字列をchar[]に変換してリストに追加
+                    list.add(line.toCharArray()); //Convert string to char[] and add to list
                 }
             }
             br.close(); 
-            
-            map = list.toArray(new char[list.size()][]); //listの集合を2次元の配列に変換。（char[行数][列数]は2次元の配列）
+            map = list.toArray(new char[list.size()][]); // Convert list set to 2D array
 
-            /*map（2次元配列）からGoldとExitの位置を取得*/
-            for (int i = 0; i < map.length; i++) { //全ての行に対して繰り返す
-                for (int j = 0; j < map[i].length; j++) { //全ての列に対して繰り返す
+            /*Get the Gold and Exit positions from the 2D array*/
+            for (int i = 0; i < map.length; i++) {
+                for (int j = 0; j < map[i].length; j++) {
                     if (map[i][j] == 'G') {
                         G_Posi.add(new int[]{i, j});
                     } else if (map[i][j] == 'E') {
@@ -90,73 +80,69 @@ public class GameLogic {
             }
             return true;
 
-        /*try-catch構文　IOException(入出力系のエラー)が発生した場合の対応 */
+        /* Handling IOException errors */
         } catch (IOException e) {
             System.out.println("Error: ");
-            e.printStackTrace(); //エラーの詳細を出力
+            e.printStackTrace(); //Print error details
             return false;
         }
     }
 
-
-    /*Player(P)とBot(B)をランダムに配置する */
+    /* Place Player(P) and Bot(B) randomly */
     public void positioningPandB() {
-
-        Random r = new Random(); //ランダムクラスのオブジェクト生成
+        Random r = new Random();
         
-        /* プレイヤーの配置。マップファイルの最初の2行はメタデータなので、3行目から最終行までの範囲でランダムな数を生成する。* 壁(#)がない場所を指定するまで繰り返す*/
+        /*
+        Place the player. 
+        Since the first 2 lines of .txt are metadata, a random number should be generated between the 3rd line and the last line. 
+        Repeat until a location without the wall(#) is specified.
+        */
         do {
-            playerX = r.nextInt(map.length -2) +2; //ランダムに行を選択
-            playerY = r.nextInt(map[playerX].length); //指定された行内でランダムに列を選択
-        } while (map[playerX][playerY] == '#');
+            playerX = r.nextInt(map.length -2) +2; // Randomly select a row
+            playerY = r.nextInt(map[playerX].length); // Randomly select a column within a specified row
+        } while (map[playerX][playerY] == '#' || map[playerX][playerY] == 'G');
         
-        map[playerX][playerY] = 'P'; //指定された地点にプレイヤーを表示する
-        player = new Player(playerX, playerY);  //Playerオブジェクトを生成して位置情報を更新
+        map[playerX][playerY] = 'P'; // Show P at a specified location
+        player = new Player(playerX, playerY);  // Create a player object and update the location
 
 
-        /* botの配置。#とPがない場所を指定するまで繰り返す*/
+        /* Place the bot. Repeat until a location without # and P is specified. */
         do {
             botX = r.nextInt(map.length -2) +2;
             botY = r.nextInt(map[botX].length);
         } while (map[botX][botY] == '#' || (botX == playerX && botY == playerY));
         
-        map[botX][botY] = 'B'; //指定された地点にボットを配置する
-        bot = new Bot(botX, botY); //Botオブジェクトを生成して位置情報を更新
-
+        map[botX][botY] = 'B'; // Show B at a specified location
+        bot = new Bot(botX, botY); // Create a bot object and update the location
     }
 
-
-    /* プレイヤーの移動 */
+    /* Player Movement */
     public void movePlayer(String direction) {
-        player.move(direction, map, G_Posi, E_Posi); // Playerクラスの move メソッドを実行
-        playerX = player.getX(); // プレイヤーのX座標を更新
-        playerY = player.getY(); // プレイヤーのY座標を更新
-        System.out.println("Player moved to (" + player.getX() + ", " + player.getY() + ")");
-        captured(player.getX(), player.getY()); //Botに捕まったかどうかを確認
+        player.move(direction, map, G_Posi, E_Posi);
+        playerX = player.getX(); // Update the player's position (x)
+        playerY = player.getY(); // Update the player's position (y)
+        captured(player.getX(), player.getY()); // Check if the player was caught by a bot
     }
 
-    /* Botの移動 */
+    /* Bot Movement */
     public void moveBot() {
-        bot.move(map, G_Posi, E_Posi); // Bot の移動処理を委譲
-        botX = bot.getX(); // BotのX座標を更新
-        botY = bot.getY(); // BotのY座標を更新
-        System.out.println("Bot moved to (" + bot.getX() + ", " + bot.getY() + ")");
-        captured(bot.getX(), bot.getY()); // Botに捕まったかどうかを確認
+        bot.move(map, G_Posi, E_Posi);
+        botX = bot.getX(); // Update the player's position (x)
+        botY = bot.getY(); // Update the player's position (y)
+        captured(bot.getX(), bot.getY()); // Check if the player was caught by a bot
     }
 
-
-
-    /* HELLOコマンド*/
+    /* HELLO */
     public void hello() {
         System.out.println("Gold to win: " + G_toWin);
     }
 
-    /* GOLDコマンド */
+    /* GOLD */
     public void displayG() {
         System.out.println("Gold Owned: " + player.getGcount());
     }
 
-    /* PICKUPコマンド */
+    /* PICKUP */
     public void pickupG() {
         if (player.pickup(G_Posi, map)) {
             System.out.println("Success. Gold owned: " + player.getGcount());
@@ -165,7 +151,7 @@ public class GameLogic {
         }
     }
 
-    /* QUITコマンド。PがEと同じ位置にいて、G_toWin以上のGを持っていれば勝利。 */
+    /* QUIT: Check if P is at the same coordinate as E and has G greater than or equal to G_toWin */
     public void quit() {
         if (player.is_EPosi(playerX, playerY, E_Posi) && player.getGcount() >= G_toWin) {
             System.out.println("WIN. You became a millionaire!");
@@ -176,17 +162,17 @@ public class GameLogic {
     }
 
 
-    /*Pの位置とBの位置が重なったかどうかを確認*/
+    /* Collision judgment */
     public void captured(int currentX, int currentY) {
         if (playerX == botX && playerY == botY) {
             System.out.println("LOSE. You are captured.");
-            map[botX][botY] = '*'; //衝突地点
+            map[botX][botY] = '*'; // collision point
             displayMap();
-            System.exit(0); // ゲームを終了
+            System.exit(0); // quit the game
         }
     }
 
-    /* 全体のMapの表示。全ての行iが持つ全ての列jを書き出す。 */
+    /* Display the whole map */
     public void displayMap() {
         for (int i = 0; i < map.length; i++) {
             for (int j = 0; j < map[i].length; j++){
@@ -196,17 +182,17 @@ public class GameLogic {
         }
     }
 
-    /*LOOKのコマンド */
+    /* LOOK */
     public void look() {
-        int topX = playerX - 2; //Pから2個上の行
-        int leftY = playerY - 2; //Pから2個左の列
+        int topX = playerX - 2; // 2 rows above P
+        int leftY = playerY - 2; // 2 columns left from P
     
         for (int i = 0; i < 5; i++) {
             for (int j = 0; j < 5; j++) {
                 int x = topX + i;
                 int y = leftY + j;
     
-                /* x(行)とy(列)が0~.lengthの範囲外だった場合は#を描写。それ以外はそのまま表示する。　*/
+                /* If x and y are outside the range of 0~.length, # is drawn. Others are displayed as is */
                 if (x < 0 || x >= map.length || y < 0 || y >= map[x].length) {
                     System.out.print("#");
                 } else {
