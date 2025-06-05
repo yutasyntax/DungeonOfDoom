@@ -6,143 +6,171 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.Random;
 
+/**
+ * Handles the core logic of the Dungeon of Doom game:
+ * map loading, player and bot placement, and game mechanics.
+ */
 public class GameLogic {
-    private char [][] map; // Stores 2D map data
-    private Player player; // Object variable of Player
-    private int playerX, playerY; // Variables of Player position
-    private Bot bot; // Object variable of Bot
-    private int botX, botY; // Variables of Bot position
-    private int G_toWin = 0; //winning condition
-    private List<int[]> G_Posi = new ArrayList<>(); // list to store Gold positions
-    private List<int[]> E_Posi = new ArrayList<>(); // list to store Exit position(s)
+    private char [][] map;
+    private Player player;
+    private int playerX, playerY;
 
-    /* Check if map format is correct */
-    public void inquireMap(Scanner s){
-        while (true) {
-            System.out.println("Input the pass (e.g., DungeonOfDoom/dungeon.txt):");
-            String fileName = s.nextLine(); // Assign user input to fileName
+    private Bot bot;
+    private int botX, botY;
 
-            /* Load the map. Repeat until it loads successfully */
-            if (loadMap(fileName)) {
-                break;
-            } else {
-                System.out.println("Please try again.");
-            }
-        }    
+    private int G_toWin = 0;
+    private List<int[]> G_Posi = new ArrayList<>();
+    private List<int[]> E_Posi = new ArrayList<>();
+
+    private Renderer renderer = new Renderer();
+
+    /**
+     * Initializes the game by loading the map and placing the player and bot.
+     */
+    public void initializeGame(Scanner scanner) {
+        inquireMap(scanner);
+        positioningPandB();
     }
 
-    /* Load map */
-    public boolean loadMap(String fileName) {
+    /**
+     * Updates the game state after each turn.
+     * Moves the bot and checks if it has captured the player.
+     */
+    public void updateGameState() {
+        moveBot();
+        captured(bot.getX(), bot.getY());
+    }
 
-        /* Error if no file is passed */
+    /**
+     * Asks the player to input a valid map file path until one is successfully loaded.
+     */
+    public void inquireMap(Scanner s) {
+        while (true) {
+            System.out.println("Input the path (e.g., dungeon.txt):");
+            String fileName = s.nextLine();
+
+            if (loadMap(fileName)) {
+                break;
+            }
+        }
+    }
+
+    /**
+     * Loads the map from the given file and extracts gold and exit positions.
+     */
+    public boolean loadMap(String fileName) {
         if (fileName == null || fileName.isEmpty()) {
             System.out.println("Error: file is not provided.");
             return false;
         }
 
         try {
-            List<char[]> list = new ArrayList<>(); // Object for storing map (array of char)
-            FileReader fr = new FileReader(fileName); // Object for reading characters from a file
-            BufferedReader br = new BufferedReader(fr); // Object for reading characters line by line
-             
-            /* Read number in the 2nd line. Read the map from the 3rd line onwards*/
+            List<char[]> list = new ArrayList<>();
+            FileReader fr = new FileReader(fileName);
+            BufferedReader br = new BufferedReader(fr);
+
             String line;
             int lineNum = 0;
 
-            while ((line = br.readLine()) != null) { 
+            while ((line = br.readLine()) != null) {
                 lineNum++;
-                if (lineNum == 2) { 
-                    if (line.startsWith("win ")) {
-                        String num = line.substring(4).trim(); // Trim "win_" to get only the number
-                        G_toWin = Integer.parseInt(num);
-                        System.out.println(); //Add a new line
-                    } else {
-                        System.out.println("There is no Win condition written on the second line. Win condition is set to 0."); //Error Handling
-                        G_toWin = 0; 
-                    }
+                if (lineNum == 2 && line.startsWith("win ")) {
+                    String num = line.substring(4).trim();
+                    G_toWin = Integer.parseInt(num);
+                } else if (lineNum == 2) {
+                    System.out.println("No win condition in second line. Set to 0.");
+                    G_toWin = 0;
                 }
-                if (lineNum > 2) {
-                    list.add(line.toCharArray()); //Convert string to char[] and add to list
-                }
+                if (lineNum > 2) list.add(line.toCharArray());
             }
-            br.close(); 
-            map = list.toArray(new char[list.size()][]); // Convert list set to 2D array
 
-            /*Get the Gold and Exit positions from the 2D array*/
+            br.close();
+            map = list.toArray(new char[list.size()][]);
+
+            // Check if tha map is empty
+            if (map == null || map.length == 0) {
+                System.out.println("Error: The map is empty. Please make sure the file contains a valid map layout.\n");
+                return false;
+            }
+
+            // Extract gold and exit positions from the map
             for (int i = 0; i < map.length; i++) {
                 for (int j = 0; j < map[i].length; j++) {
-                    if (map[i][j] == 'G') {
-                        G_Posi.add(new int[]{i, j});
-                    } else if (map[i][j] == 'E') {
-                        E_Posi.add(new int[]{i, j});
-                    }
+                    if (map[i][j] == 'G') G_Posi.add(new int[]{i, j});
+                    else if (map[i][j] == 'E') E_Posi.add(new int[]{i, j});
                 }
             }
             return true;
 
-        /* Handling IOException errors */
         } catch (IOException e) {
-            System.out.println("Error: ");
-            e.printStackTrace(); //Print error details
+            System.out.println("Failed to load map: '" + fileName + "'");
+            System.out.println("Please make sure the file exists in the correct directory and try again.\n");
             return false;
         }
     }
 
-    /* Place Player(P) and Bot(B) randomly */
+    /**
+     * Randomly places the player and bot on valid positions on the map.
+     */
     public void positioningPandB() {
         Random r = new Random();
-        
-        /*
-        Place the player. 
-        Since the first 2 lines of .txt are metadata, a random number should be generated between the 3rd line and the last line. 
-        Repeat until a location without the wall(#) is specified.
-        */
+
+        // Place player
         do {
-            playerX = r.nextInt(map.length -2) +2; // Randomly select a row
-            playerY = r.nextInt(map[playerX].length); // Randomly select a column within a specified row
+            playerX = r.nextInt(map.length - 2) + 2;
+            playerY = r.nextInt(map[playerX].length);
         } while (map[playerX][playerY] == '#' || map[playerX][playerY] == 'G');
-        
-        map[playerX][playerY] = 'P'; // Show P at a specified location
-        player = new Player(playerX, playerY);  // Create a player object and update the location
 
+        map[playerX][playerY] = 'P';
+        player = new Player(playerX, playerY);
 
-        /* Place the bot. Repeat until a location without # and P is specified. */
+        // Place bot
         do {
-            botX = r.nextInt(map.length -2) +2;
+            botX = r.nextInt(map.length - 2) + 2;
             botY = r.nextInt(map[botX].length);
         } while (map[botX][botY] == '#' || (botX == playerX && botY == playerY));
-        
-        map[botX][botY] = 'B'; // Show B at a specified location
-        bot = new Bot(botX, botY); // Create a bot object and update the location
+
+        map[botX][botY] = 'B';
+        bot = new Bot(botX, botY);
     }
 
-    /* Player Movement */
+    /**
+     * Moves the player in the given direction and checks for capture.
+     */
     public void movePlayer(String direction) {
         player.move(direction, map, G_Posi, E_Posi);
-        playerX = player.getX(); // Update the player's position (x)
-        playerY = player.getY(); // Update the player's position (y)
-        captured(player.getX(), player.getY()); // Check if the player was caught by a bot
+        playerX = player.getX();
+        playerY = player.getY();
+        captured(playerX, playerY);
     }
 
-    /* Bot Movement */
+    /**
+     * Moves the bot and checks if it captured the player.
+     */
     public void moveBot() {
         bot.move(map, G_Posi, E_Posi);
-        botX = bot.getX(); // Update the player's position (x)
-        botY = bot.getY(); // Update the player's position (y)
-        captured(bot.getX(), bot.getY()); // Check if the player was caught by a bot
+        botX = bot.getX();
+        botY = bot.getY();
+        captured(botX, botY);
     }
 
-    /* HELLO */
+    /**
+     * Displays the amount of gold required to win.
+     */
     public void hello() {
         System.out.println("Gold to win: " + G_toWin);
     }
 
-    /* GOLD */
+    /**
+     * Displays the amount of gold the player currently owns.
+     */
     public void displayG() {
         System.out.println("Gold Owned: " + player.getGcount());
     }
 
-    /* PICKUP */
+    /**
+     * Attempts to pick up gold at the player's current position.
+     */
     public void pickupG() {
         if (player.pickup(G_Posi, map)) {
             System.out.println("Success. Gold owned: " + player.getGcount());
@@ -151,7 +179,9 @@ public class GameLogic {
         }
     }
 
-    /* QUIT: Check if P is at the same coordinate as E and has G greater than or equal to G_toWin */
+    /**
+     * Ends the game. Checks if the player has met the win condition.
+     */
     public void quit() {
         if (player.is_EPosi(playerX, playerY, E_Posi) && player.getGcount() >= G_toWin) {
             System.out.println("WIN. You became a millionaire!");
@@ -161,45 +191,29 @@ public class GameLogic {
         System.exit(0);
     }
 
-
-    /* Collision judgment */
+    /**
+     * Checks if the player has been captured by the bot.
+     */
     public void captured(int currentX, int currentY) {
         if (playerX == botX && playerY == botY) {
             System.out.println("LOSE. You are captured.");
-            map[botX][botY] = '*'; // collision point
+            map[botX][botY] = '*';
             displayMap();
-            System.exit(0); // quit the game
+            System.exit(0);
         }
     }
 
-    /* Display the whole map */
+    /**
+     * Displays the full map.
+     */
     public void displayMap() {
-        for (int i = 0; i < map.length; i++) {
-            for (int j = 0; j < map[i].length; j++){
-                System.out.print(map[i][j]);
-            }
-            System.out.println();
-        }
+        renderer.displayMap(map);
     }
 
-    /* LOOK */
+    /**
+     * Displays a 5x5 area centered on the player's position.
+     */
     public void look() {
-        int topX = playerX - 2; // 2 rows above P
-        int leftY = playerY - 2; // 2 columns left from P
-    
-        for (int i = 0; i < 5; i++) {
-            for (int j = 0; j < 5; j++) {
-                int x = topX + i;
-                int y = leftY + j;
-    
-                /* If x and y are outside the range of 0~.length, # is drawn. Others are displayed as is */
-                if (x < 0 || x >= map.length || y < 0 || y >= map[x].length) {
-                    System.out.print("#");
-                } else {
-                    System.out.print(map[x][y]);
-                }
-            }
-            System.out.println();
-        }
+        renderer.displayLook(map, playerX, playerY);
     }
 }
